@@ -1,0 +1,127 @@
+{
+  "name": "ai-quality-gate",
+  "displayName": "AI Quality Gate",
+  "description": "Audits AI-generated code diffs to prevent vibe coding leakage.",
+  "version": "0.0.1",
+  "publisher": "friedcode",
+  "author": "ithadu",
+  "license": "MIT",
+  "keywords": [
+    "ai",
+    "code review",
+    "code quality",
+    "linter",
+    "security",
+    "secrets",
+    "copilot",
+    "vibe coding"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/friedcodeau/code-gate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/friedcodeau/code-gate/issues"
+  },
+  "homepage": "https://github.com/friedcodeau/code-gate#readme",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Machine Learning"
+  ],
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:javascript",
+    "onLanguage:typescriptreact",
+    "onLanguage:javascriptreact"
+  ],
+  "main": "./dist/client.js",
+  "icon": "images/icon.png",
+  "bin": {
+    "ai-quality-gate": "./dist/cli.js"
+  },
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "AI Quality Gate",
+      "properties": {
+        "aiQualityGate.llmProvider": {
+          "type": "string",
+          "enum": [
+            "none",
+            "claude",
+            "openai",
+            "gemini"
+          ],
+          "enumDescriptions": [
+            "Disable the LLM semantic layer — local checks only.",
+            "Use the Anthropic Claude API.",
+            "Use the OpenAI API.",
+            "Use the Google Gemini API."
+          ],
+          "default": "none",
+          "description": "Which LLM provider to use for deep semantic code auditing. Set to 'none' to run local checks only."
+        },
+        "aiQualityGate.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for the selected LLM provider (Claude, OpenAI, or Gemini)."
+        },
+        "aiQualityGate.llmModel": {
+          "type": "string",
+          "default": "",
+          "description": "Override the default model for the selected provider. Leave empty to use the recommended default (Claude: claude-sonnet-4-6, OpenAI: gpt-4o-mini, Gemini: gemini-2.0-flash)."
+        },
+        "aiQualityGate.cloudEndpoint": {
+          "type": "string",
+          "default": "",
+          "description": "Override the default API endpoint URL for the selected provider. Useful for proxies or self-hosted compatible endpoints. Leave empty to use the official API."
+        },
+        "aiQualityGate.auditMode": {
+          "type": "string",
+          "enum": [
+            "fullDocument",
+            "changedLines",
+            "gitDiff"
+          ],
+          "enumDescriptions": [
+            "Audit the entire document.",
+            "Only surface local findings on lines that changed since the file was opened or last saved (diff-focused).",
+            "Only surface local findings on lines that differ from the file's committed git HEAD version. New/untracked files are audited in full."
+          ],
+          "default": "fullDocument",
+          "description": "Scope of local auditing. 'changedLines' diffs against the in-session baseline; 'gitDiff' diffs against git HEAD. Both focus the gate on newly introduced (e.g. AI-pasted) code."
+        },
+        "aiQualityGate.debounceMs": {
+          "type": "number",
+          "default": 400,
+          "minimum": 0,
+          "description": "Delay in milliseconds to wait after the last edit before auditing. Prevents auditing (and cloud calls) on every keystroke."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "test": "node esbuild.js --test && node dist/checks.test.js",
+    "audit": "node dist/cli.js",
+    "package": "NODE_ENV=production vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "@typescript-eslint/typescript-estree": "^7.1.0",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.11"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.20.1",
+    "typescript": "^5.3.3"
+  }
+}

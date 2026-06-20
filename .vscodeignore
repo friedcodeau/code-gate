@@ -1,0 +1,15 @@
+.vscode/**
+client/**
+server/**
+cloud-backend-mock/**
+samples/**
+node_modules/**
+esbuild.js
+tsconfig.json
+package-lock.json
+dist/*.test.js
+images/*.svg
+**/*.map
+**/*.ts
+.gitignore
+.DS_Store

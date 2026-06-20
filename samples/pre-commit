@@ -1,0 +1,19 @@
+#!/bin/sh
+# AI Quality Gate — pre-commit hook.
+#
+# Blocks a commit when the gate finds issues in your staged changes.
+#
+# Install:
+#   cp samples/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+# (Or invoke it from your existing husky / lefthook setup.)
+#
+# To bypass for a single commit:  git commit --no-verify
+
+if ! npx ai-quality-gate --staged --fail-on error; then
+  echo ""
+  echo "AI Quality Gate found issues in your staged changes. Commit aborted."
+  echo "Fix the issues above, or run 'git commit --no-verify' to bypass."
+  exit 1
+fi
