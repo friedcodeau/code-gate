@@ -63,6 +63,22 @@ assert(
   scanRepetition('\n\n\n\n').length === 0,
   'scanRepetition ignores blank lines'
 );
+assert(
+  scanRepetition('      }\n    }\n  }').length === 0,
+  'scanRepetition does not flag nested closing braces at different indents'
+);
+assert(
+  scanRepetition('    },\n    },\n    },').length === 0,
+  'scanRepetition does not flag trivial punctuation lines (array-of-objects)'
+);
+assert(
+  scanRepetition('  foo();\n    foo();\n      foo();').length === 0,
+  'scanRepetition does not flag the same statement at different indentation'
+);
+assert(
+  scanRepetition('    total += 1;\n    total += 1;\n    total += 1;').length === 1,
+  'scanRepetition still flags a genuine repeated statement (same indent)'
+);
 
 // --- computeChangedLines ---
 {

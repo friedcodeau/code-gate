@@ -1,0 +1,47 @@
+name: AI Quality Gate
+
+# Dogfooding: run the extension's own CLI against its source. Local checks only
+# (no API key required). To also enable the LLM layer, add an AI_QUALITY_GATE_API_KEY
+# repo secret and pass `--llm --provider <name>` to the steps below.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run compile
+
+      # The test file intentionally contains fake secrets as fixtures, and the
+      # mock backend is legacy — both are excluded from the audit.
+      - name: Run gate (SARIF for inline annotations)
+        run: |
+          FILES=$(git ls-files '*.ts' '*.js' | grep -v -E 'checks.test.ts|cloud-backend-mock')
+          node dist/cli.js --all $FILES --format sarif > results.sarif || true
+
+      - name: Upload SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
+      - name: Enforce gate (fail on errors)
+        run: |
+          FILES=$(git ls-files '*.ts' '*.js' | grep -v -E 'checks.test.ts|cloud-backend-mock')
+          node dist/cli.js --all $FILES --fail-on error

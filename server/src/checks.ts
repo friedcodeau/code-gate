@@ -57,23 +57,31 @@ export function scanSecrets(text: string): SecretFinding[] {
   return findings;
 }
 
+// A line is "trivial" if it's blank or made up only of brackets/punctuation.
+// Such lines legitimately repeat in normal code (nested closing braces, `},`
+// between array-of-object entries) and must not count as repetition.
+function isTrivialLine(trimmed: string): boolean {
+  return trimmed === '' || /^[(){}[\]<>;,.]*$/.test(trimmed);
+}
+
 /**
- * Detect runs of identical non-empty lines as a proxy for "hallucination
- * loops" (a model repeating itself). A run of `threshold` or more identical
- * lines is reported once, spanning the whole run.
+ * Detect runs of identical, meaningful lines as a proxy for "hallucination
+ * loops" (a model repeating itself). Lines are compared verbatim — including
+ * indentation — so the same statement in different scopes doesn't match, and
+ * trivial bracket/punctuation lines are skipped. A run of `threshold` or more
+ * is reported once, spanning the whole run.
  */
 export function scanRepetition(text: string, threshold = 3): RepetitionFinding[] {
   const findings: RepetitionFinding[] = [];
   const lines = text.split('\n');
   let i = 0;
   while (i < lines.length) {
-    const current = lines[i].trim();
-    if (current === '') {
+    if (isTrivialLine(lines[i].trim())) {
       i++;
       continue;
     }
     let j = i + 1;
-    while (j < lines.length && lines[j].trim() === current) {
+    while (j < lines.length && lines[j] === lines[i]) {
       j++;
     }
     const run = j - i;
